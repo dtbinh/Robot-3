@@ -1,13 +1,11 @@
 package Tasks;
 
-import javax.crypto.spec.PSource.PSpecified;
-
 import Modules.GyroSensor;
 import Modules.GyroSensor.UpdateListener;
-import Utils.Commons;
 import Modules.Pilot;
 import Modules.Radar;
 import Modules.TouchSensor;
+import Utils.Commons;
 import main.Miner.Direction;
 
 public class EntranceTask implements Task, Radar.UpdateListener, TouchSensor.OnTouchListener {
@@ -19,19 +17,7 @@ public class EntranceTask implements Task, Radar.UpdateListener, TouchSensor.OnT
 	Pilot pilot;
 	TouchSensor touchSensor;
 	GyroSensor gyroSensor;
-	
-//	Timer timer = new Timer();
-//	
-//	TimerTask task = new TimerTask() {
-//		
-//		@Override
-//		public void run() {
-//			Commons.writeWithTitle(grabber.grabber.getTachoCount() + "", "");
-//		}
-//	};
-//	
-//	timer.schedule(task, 0, 100);
-	
+
 	public EntranceTask(Radar radar, Pilot pilot, TouchSensor touchSensor, GyroSensor gyroSensor) {
 		this.radar = radar;
 		this.pilot = pilot;
@@ -152,5 +138,13 @@ public class EntranceTask implements Task, Radar.UpdateListener, TouchSensor.OnT
 		stop();
 		touchSensor.stopListening();
 		turnRobotAround();
+	}
+
+	@Override
+	public void resetTask() {
+		gyroSensor.stopReading();
+		radar.removeUpdateListener(this);
+		touchSensor.stopListening();
+		pilot.stop();
 	}
 }

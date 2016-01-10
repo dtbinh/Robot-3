@@ -7,6 +7,7 @@ import Utils.Commons;
 import lejos.hardware.port.SensorPort;
 import lejos.hardware.sensor.EV3GyroSensor;
 import lejos.robotics.SampleProvider;
+import main.Miner;
 
 public class GyroSensor {
 	
@@ -25,6 +26,8 @@ public class GyroSensor {
 	}
 	
 	public void startReading(final UpdateListener listener) {
+		if(Miner.isReset()) return;
+		
 		gyroSensor.reset();
 		timer = new Timer();
 		timer.schedule(new TimerTask() {
@@ -39,6 +42,7 @@ public class GyroSensor {
 	
 	public void stopReading() {
 		timer.cancel();
+		timer.purge();
 	}
 	
 	public interface UpdateListener {

@@ -12,6 +12,7 @@ import lejos.hardware.port.MotorPort;
 import lejos.hardware.port.SensorPort;
 import lejos.hardware.sensor.EV3UltrasonicSensor;
 import lejos.robotics.SampleProvider;
+import main.Miner;
 import main.Miner.Direction;
 
 public class Radar {
@@ -55,6 +56,8 @@ public class Radar {
 	}
 
 	public void addUpdateListener(UpdateListener listener) {
+		if(Miner.isReset()) return;
+		
 		synchronized (listenerSyncronizer) {
 			shouldReadValues = true;
 			listeners.add(listener);

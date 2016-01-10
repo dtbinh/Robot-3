@@ -10,28 +10,29 @@ public class TouchSensor {
 	static EV3LargeRegulatedMotor motor = Miner.grabberMotor;
 
 	Timer timer;
-	
+
 	public void startListening(final OnTouchListener listener) {
+		if (Miner.isReset())
+			return;
+
 		reset();
-		
+
 		timer = new Timer();
 		timer.schedule(new TimerTask() {
 			@Override
 			public void run() {
-				if(Math.abs(motor.getTachoCount()) > 2) {
+				if (Math.abs(motor.getTachoCount()) > 2) {
 					listener.onTouched();
 				}
 			}
 		}, 0, 100);
 	}
-	
+
 	public void stopListening() {
-		if(timer != null) {
-			timer.cancel();
-		}
-		reset();
+		timer.cancel();
+		timer.purge();
 	}
-	
+
 	private void reset() {
 		motor.resetTachoCount();
 		motor.rotateTo(0);
