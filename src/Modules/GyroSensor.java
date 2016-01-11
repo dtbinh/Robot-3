@@ -3,7 +3,6 @@ package Modules;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import Utils.Commons;
 import lejos.hardware.port.SensorPort;
 import lejos.hardware.sensor.EV3GyroSensor;
 import lejos.robotics.SampleProvider;
@@ -20,15 +19,13 @@ public class GyroSensor {
 
 		@Override
 		public void run() {
-			System.out.println("\tonGyroUpdate");
 			if(gyroUpdateListener != null) {
-				System.out.println("\tonGyroUpdate accepted");
+				System.out.println("\tonGyroUpdate");
 				gyroUpdateListener.onGyroUpdate(readGyro());
 			}
 		}
 	};
 	
-
 	public static float readGyro() {
 		SampleProvider sampleProvider = gyroSensor.getAngleAndRateMode();
 
@@ -50,7 +47,7 @@ public class GyroSensor {
 			return;
 
 		gyroSensor.reset();
-		timer.schedule(timerTask, 0, 100);
+		timer.schedule(timerTask, 0, 300);
 	}
 
 	public void removeListener() {

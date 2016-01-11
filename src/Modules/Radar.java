@@ -1,8 +1,5 @@
 package Modules;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -24,12 +21,9 @@ public class Radar {
 
 	Direction baseSensorDirection = Direction.LEFT;
 
-	List<RadarUpdateListener> listeners = Collections.synchronizedList(new ArrayList<RadarUpdateListener>());
-	Object listenerSyncronizer = new Object();
+	RadarUpdateListener listener = null;
 	
-	boolean shouldReadValues = false;
 	Timer steadySampler = new Timer();
-
 	boolean endSampling = false;
 
 	public Radar() {
@@ -41,42 +35,23 @@ public class Radar {
 
 			@Override
 			public void run() {
-				if (shouldReadValues) {
+				if(listener != null) {
 					System.out.println("\tonRadarUpdate");
-					synchronized (listenerSyncronizer) {
-						System.out.println("\tonRadarUpdate accepted");
-						float[] values = readValues();
-						for (int i=0; i< listeners.size(); i++) {
-							listeners.size();
-							RadarUpdateListener listener = listeners.get(i);
-							listener.onRadarUpdate(values[0], values[1]);
-						}
-					}
+					float[] values = readValues();
+					listener.onRadarUpdate(values[0], values[1]);
 				}
 			}
-		}, 0, 100);
+		}, 0, 300);
 	}
 
-	public void addUpdateListener(RadarUpdateListener listener) {
+	public void setUpdateListener(RadarUpdateListener listener) {
 		if(Miner.isReset()) return;
-
-		System.out.println("\taddRadarUpdateListener");
-		synchronized (listenerSyncronizer) {
-			System.out.println("\taddRadarUpdateListener accepted");
-			shouldReadValues = true;
-			if (!listeners.contains(listener))
-				listeners.add(listener);
-		}
+		
+		this.listener = listener;
 	}
 
-	public void removeUpdateListener(RadarUpdateListener listener) {
-		System.out.println("\tremoveRadarUpdateListener");
-		synchronized (listenerSyncronizer) {
-			System.out.println("\tremoveRadarUpdateListener accepted");
-			listeners.remove(listener);
-			if (listeners.size() == 0)
-				shouldReadValues = false;
-		}
+	public void removeUpdateListener() {
+		listener = null;
 	}
 
 	public Direction getBaseDirection() {

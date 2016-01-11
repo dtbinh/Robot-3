@@ -23,7 +23,7 @@ public class MappingTask implements Task {
 	}
 
 	@Override
-	public void startTask() {
+	public void onStartTask() {
 		try {
 			ServerSocket serverSocket = new ServerSocket(1234);
 			Socket client = serverSocket.accept();
@@ -42,7 +42,8 @@ public class MappingTask implements Task {
 	}
 
 	@Override
-	public void resetTask() {
+	public void onResetTask() {
+		// TODO Auto-generated method stub
 		
 	}
 }
