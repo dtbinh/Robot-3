@@ -8,7 +8,7 @@ import Modules.GyroSensor;
 import Modules.Pilot;
 import Modules.Radar;
 import Modules.TouchSensor;
-import Tasks.EntranceTask;
+import Tasks.EntranceTask2;
 import Tasks.Task;
 import Utils.Commons;
 import lejos.hardware.Button;
@@ -38,8 +38,7 @@ public class Miner {
 		TouchSensor touchSensor = new TouchSensor();
 		GyroSensor gyroSensor = new GyroSensor();
 
-		tasks.add(new EntranceTask(radar, pilot, touchSensor, gyroSensor));
-
+		tasks.add(new EntranceTask2(radar, pilot, touchSensor, gyroSensor));
 
 		Commons.writeWithTitle("IDLE", "Select task...");
 		
@@ -53,7 +52,7 @@ public class Miner {
 				case Button.ID_ESCAPE:
 					Commons.writeWithTitle("RESET COMPLETE", "Select task...");
 					setReset(true);
-					tasks.get(taskCounter).resetTask();
+					tasks.get(taskCounter).onResetTask();
 					return;
 				case Button.ID_UP:
 					taskCounter = 0;
@@ -66,7 +65,7 @@ public class Miner {
 					break;
 				}
 				setReset(false);
-				tasks.get(taskCounter).startTask();
+				tasks.get(taskCounter).onStartTask();
 
 			}
 		}, 0, 100);

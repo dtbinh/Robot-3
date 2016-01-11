@@ -24,7 +24,7 @@ public class Radar {
 
 	Direction baseSensorDirection = Direction.LEFT;
 
-	List<UpdateListener> listeners = Collections.synchronizedList(new ArrayList<UpdateListener>());
+	List<RadarUpdateListener> listeners = Collections.synchronizedList(new ArrayList<RadarUpdateListener>());
 	Object listenerSyncronizer = new Object();
 	
 	boolean shouldReadValues = false;
@@ -42,30 +42,37 @@ public class Radar {
 			@Override
 			public void run() {
 				if (shouldReadValues) {
+					System.out.println("\tonRadarUpdate");
 					synchronized (listenerSyncronizer) {
+						System.out.println("\tonRadarUpdate accepted");
 						float[] values = readValues();
 						for (int i=0; i< listeners.size(); i++) {
 							listeners.size();
-							UpdateListener listener = listeners.get(i);
-							listener.onUpdate(values[0], values[1]);
+							RadarUpdateListener listener = listeners.get(i);
+							listener.onRadarUpdate(values[0], values[1]);
 						}
 					}
 				}
 			}
-		}, 0, 300);
+		}, 0, 100);
 	}
 
-	public void addUpdateListener(UpdateListener listener) {
+	public void addUpdateListener(RadarUpdateListener listener) {
 		if(Miner.isReset()) return;
-		
+
+		System.out.println("\taddRadarUpdateListener");
 		synchronized (listenerSyncronizer) {
+			System.out.println("\taddRadarUpdateListener accepted");
 			shouldReadValues = true;
-			listeners.add(listener);
+			if (!listeners.contains(listener))
+				listeners.add(listener);
 		}
 	}
 
-	public void removeUpdateListener(UpdateListener listener) {
+	public void removeUpdateListener(RadarUpdateListener listener) {
+		System.out.println("\tremoveRadarUpdateListener");
 		synchronized (listenerSyncronizer) {
+			System.out.println("\tremoveRadarUpdateListener accepted");
 			listeners.remove(listener);
 			if (listeners.size() == 0)
 				shouldReadValues = false;
@@ -158,7 +165,7 @@ public class Radar {
 		return values;
 	}
 
-	public interface UpdateListener {
-		public void onUpdate(float baseDist, float backDist);
+	public interface RadarUpdateListener {
+		public void onRadarUpdate(float baseDist, float backDist);
 	}
 }
