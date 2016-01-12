@@ -16,19 +16,19 @@ import main.Miner;
 import main.Miner.Direction;
 
 public class MappingTask implements Task, RadarUpdateListener, GyroUpdateListener {
-	
+
 	static final int SLOW = 450;
 	static final int FAST = 500;
-	
+
 	Radar radar;
 	Pilot pilot;
 	GyroSensor gyroSensor;
-	
+
 	ColorSensor colorSensor;
-	
+
 	ServerSocket serverSocket;
 	DataOutputStream dataOutputStream;
-	
+
 	Direction[] path = new Direction[16];
 
 	public MappingTask(Radar radar, Pilot pilot, GyroSensor gyroSensor) {
@@ -44,63 +44,63 @@ public class MappingTask implements Task, RadarUpdateListener, GyroUpdateListene
 			gyroSensor.setListener(this);
 			radar.setUpdateListener(this);
 			colorSensor = new ColorSensor();
-			for (int r = 0;r < 6;r++)
-				for (int c = 0;c < 6;c++) {
+			for (int r = 0; r < 6; r++)
+				for (int c = 0; c < 6; c++) {
 					int grid = r == 5 ? Miner.explored : Miner.unknown;
 					Miner.map[r * 6 + c] = grid;
 				}
-			
+
 			findAndFeedReferanceLocation();
-			
+
 			serverSocket = new ServerSocket(1234);
 			Socket client = serverSocket.accept();
-			
+
 			OutputStream outputStream = client.getOutputStream();
 			dataOutputStream = new DataOutputStream(outputStream);
-			
+
 			updateMap();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
-	
+
 	private synchronized void updateMap() {
 		try {
 			dataOutputStream.writeInt(-1);
-			for(int i = 0;i < 36;i++)
+			for (int i = 0; i < 36; i++)
 				dataOutputStream.writeInt(Miner.map[i]);
 			dataOutputStream.writeInt(-1);
-			
+
 			dataOutputStream.flush();
 		} catch (IOException e) {
-			
+
 		}
 	}
-	
+
 	private void findAndFeedReferanceLocation() {
 		float[] values = radar.readValues();
 		Direction closer;
-		if(values[0] < values[1]) {
+		if (values[0] < values[1]) {
 			closer = radar.getBaseDirection();
 		} else {
 			closer = radar.getBackDirection();
 		}
-		
+
 		try {
 			dataOutputStream.writeInt(-2);
 			dataOutputStream.writeInt(Direction.getCode(closer));
 			Miner.myPosition = closer == Direction.LEFT ? 32 : 33;
 			dataOutputStream.writeInt(-2);
-			
+
 			dataOutputStream.flush();
 		} catch (IOException e) {
-			
+
 		}
 	}
 
 	@Override
 	public void onResetTask() {
-		
+
 		try {
 			colorSensor.close();
 			colorSensor = null;

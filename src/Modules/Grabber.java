@@ -9,7 +9,6 @@ public class Grabber {
 	
 	public Grabber(int speed) {
 		grabber.resetTachoCount();
-		grabber.rotateTo(0);
 		
 		grabber.setSpeed(speed);
 	}

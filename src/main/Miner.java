@@ -4,11 +4,13 @@ import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import Modules.Grabber;
 import Modules.GyroSensor;
 import Modules.Pilot;
 import Modules.Radar;
 import Modules.TouchSensor;
 import Tasks.EntranceTask;
+import Tasks.ExecutionTask;
 import Tasks.MappingTask;
 import Tasks.Task;
 import Utils.Commons;
@@ -41,10 +43,12 @@ public class Miner {
 		Pilot pilot = new Pilot();
 		TouchSensor touchSensor = new TouchSensor();
 		GyroSensor gyroSensor = new GyroSensor();
+		Grabber grabber = new Grabber(30);
 
 
 		tasks.add(new EntranceTask(radar, pilot, touchSensor, gyroSensor));
 		tasks.add(new MappingTask(radar, pilot, gyroSensor));
+		tasks.add(new ExecutionTask(grabber, pilot, gyroSensor));
 
 		Commons.writeWithTitle("IDLE", "Select task...");
 		
@@ -67,7 +71,7 @@ public class Miner {
 					 taskCounter = 1;
 					break;
 				case Button.ID_LEFT:
-					// taskCounter = 2;
+					taskCounter = 2;
 					break;
 				}
 				setReset(false);

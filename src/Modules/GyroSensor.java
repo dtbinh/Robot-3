@@ -31,7 +31,7 @@ public class GyroSensor {
 		}
 	};
 
-	public static float readGyro() {
+	public float readGyro() {
 		SampleProvider sampleProvider = gyroSensor.getAngleAndRateMode();
 
 		float[] sample = new float[sampleProvider.sampleSize()];

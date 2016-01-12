@@ -15,7 +15,7 @@ public class Pilot {
 
 	public Pilot() {
 		dPilot = new DifferentialPilot(WHEEL_DIAMETER, TRACK_WIDTH, leftMotor, rightMotor);
-		dPilot.setRotateSpeed(60);
+		dPilot.setRotateSpeed(20);
 		stop();
 	}
 
