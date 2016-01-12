@@ -11,7 +11,6 @@ import Modules.GyroSensor;
 import Modules.GyroSensor.GyroUpdateListener;
 import Modules.Pilot;
 import Modules.Radar;
-import Modules.Radar.RadarUpdateListener;
 import Utils.Commons;
 import main.Miner;
 import main.Miner.Direction;
@@ -52,7 +51,9 @@ public class MappingTask implements Task, GyroUpdateListener {
 	@Override
 	public void onStartTask() {
 		try {
-			pilot.setRotationSpeed(100);
+			pilot.setRotationSpeed(200);
+			pilot.setSpeedsAndMove(100, 100);
+			pilot.stop();
 			gyroSensor.startReading();
 //			gyroSensor.setListener(this);
 			colorSensor = new ColorSensor();
@@ -74,34 +75,39 @@ public class MappingTask implements Task, GyroUpdateListener {
 			
 			for (int i = 0;i < path.length;i++) {
 				gyroSensor.reset();
+				GyroSensor.readGyro();
 				Direction direction = path[i];
 				if (direction == Direction.LEFT) {
+					int turnAmount = 90;
+					
 					currentState = State.TURNING;
 					robotDirection = robotDirection == 3 ?
 							0 : robotDirection + 1;
-					pilot.rotate(90, false);
+					pilot.rotate(turnAmount, false);
 					
-					float diff = 90 - GyroSensor.readGyro();
-					while (Math.abs(diff) > 3) {
+					float diff = turnAmount - GyroSensor.readGyro();
+					while (Math.abs(diff) > 2) {
 						pilot.rotate(diff, false);
-						diff = 90 - GyroSensor.readGyro();
+						diff = turnAmount - GyroSensor.readGyro();
 					}
 				}
 				else if (direction == Direction.RIGHT) {
+					int turnAmount = -90;
+					
 					currentState = State.TURNING;
 					robotDirection = robotDirection == 0 ?
 							3 : robotDirection - 1;
-					pilot.rotate(-90, false);
+					pilot.rotate(turnAmount, false);
 					
-					float diff = -90 - GyroSensor.readGyro();
-					while (Math.abs(diff) > 3) {
+					float diff = turnAmount - GyroSensor.readGyro();
+					while (Math.abs(diff) > 2) {
 						pilot.rotate(diff, false);
-						diff = -90 - GyroSensor.readGyro();
+						diff = turnAmount - GyroSensor.readGyro();
 					}
 				}
 				
 				currentState = State.MOVING;
-				pilot.travel(33);
+				pilot.travel(35);
 				Miner.myPosition += movement[robotDirection];
 				Miner.map[Miner.myPosition] = Miner.explored;
 				
@@ -147,7 +153,6 @@ public class MappingTask implements Task, GyroUpdateListener {
 		
 		try {
 			dataOutputStream.writeInt(-2);
-//			dataOutputStream.writeInt(Direction.getCode(closer));
 			if (wallOnSide == Direction.LEFT) {
 				Miner.myPosition = 32;
 				path = new Direction[] {
@@ -193,6 +198,7 @@ public class MappingTask implements Task, GyroUpdateListener {
 		try {
 			dataOutputStream.writeInt(-2);
 			dataOutputStream.writeInt(Miner.myPosition);
+			dataOutputStream.writeInt(colorSensor.readColor());
 			dataOutputStream.writeInt(-2);
 		} catch (IOException e) {
 			
@@ -202,6 +208,9 @@ public class MappingTask implements Task, GyroUpdateListener {
 	@Override
 	public void onResetTask() {
 		try {
+			pilot.stop();
+			pilot.setSpeeds(500, 500);
+			
 			gyroSensor.removeListener();
 			radar.removeUpdateListener();
 			colorSensor.close();

@@ -2,6 +2,7 @@ package Modules;
 
 import lejos.hardware.port.SensorPort;
 import lejos.hardware.sensor.EV3ColorSensor;
+import lejos.robotics.Color;
 import lejos.robotics.ColorAdapter;
 
 public class ColorSensor {
@@ -10,7 +11,10 @@ public class ColorSensor {
 	private static ColorAdapter colorAdapter = new ColorAdapter(colorSensor);
 	
 	public int readColor() {
-		return colorAdapter.getColorID();
+		Color color = colorAdapter.getColor();
+		int res = color.getGreen() > 7 ? 1 :
+			color.getRed() > 7 ? 7 : -1;
+		return res;
 	}
 	
 	public void close() {

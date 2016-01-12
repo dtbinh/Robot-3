@@ -3,7 +3,6 @@ package Modules;
 import lejos.hardware.motor.EV3LargeRegulatedMotor;
 import lejos.hardware.port.MotorPort;
 import lejos.robotics.navigation.DifferentialPilot;
-import main.Miner.Direction;
 
 public class Pilot {
 	private DifferentialPilot dPilot;
@@ -25,11 +24,15 @@ public class Pilot {
 		leftMotor.resetTachoCount();
 		rightMotor.resetTachoCount();
 	}
-
+	
 	public void setSpeeds(float left, float right) {
 		leftMotor.setSpeed(left);
 		rightMotor.setSpeed(right);
+	}
 
+	public void setSpeedsAndMove(float left, float right) {
+		setSpeeds(left, right);
+		
 		if (left >= 0) {
 			leftMotor.forward();
 		} else {
