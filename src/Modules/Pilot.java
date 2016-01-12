@@ -55,4 +55,7 @@ public class Pilot {
 		dPilot.travel(distance);
 	}
 
+	public void setRotationSpeed(double speed) {
+		dPilot.setRotateSpeed(speed);
+	}
 }

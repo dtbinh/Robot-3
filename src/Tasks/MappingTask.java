@@ -12,10 +12,15 @@ import Modules.GyroSensor.GyroUpdateListener;
 import Modules.Pilot;
 import Modules.Radar;
 import Modules.Radar.RadarUpdateListener;
+import Utils.Commons;
 import main.Miner;
 import main.Miner.Direction;
 
-public class MappingTask implements Task, RadarUpdateListener, GyroUpdateListener {
+public class MappingTask implements Task, GyroUpdateListener {
+	
+	public enum State {
+		TURNING, MOVING;
+	}
 	
 	static final int SLOW = 450;
 	static final int FAST = 500;
@@ -29,7 +34,14 @@ public class MappingTask implements Task, RadarUpdateListener, GyroUpdateListene
 	ServerSocket serverSocket;
 	DataOutputStream dataOutputStream;
 	
-	Direction[] path = new Direction[16];
+	boolean activateCorrection = false;
+	State currentState;
+	Direction wallOnSide;
+	
+	Direction[] path;
+	int robotDirection = 0;
+	// up, left, down, right
+	int[] movement = new int[] { -6, -1, 6, 1 };
 
 	public MappingTask(Radar radar, Pilot pilot, GyroSensor gyroSensor) {
 		this.radar = radar;
@@ -40,9 +52,9 @@ public class MappingTask implements Task, RadarUpdateListener, GyroUpdateListene
 	@Override
 	public void onStartTask() {
 		try {
+			pilot.setRotationSpeed(100);
 			gyroSensor.startReading();
-			gyroSensor.setListener(this);
-			radar.setUpdateListener(this);
+//			gyroSensor.setListener(this);
 			colorSensor = new ColorSensor();
 			for (int r = 0;r < 6;r++)
 				for (int c = 0;c < 6;c++) {
@@ -50,21 +62,68 @@ public class MappingTask implements Task, RadarUpdateListener, GyroUpdateListene
 					Miner.map[r * 6 + c] = grid;
 				}
 			
-			findAndFeedReferanceLocation();
-			
-			serverSocket = new ServerSocket(1234);
+			serverSocket = new ServerSocket(1029);
+			Commons.writeWithTitle("Miner", "Waiting Master");
 			Socket client = serverSocket.accept();
 			
 			OutputStream outputStream = client.getOutputStream();
 			dataOutputStream = new DataOutputStream(outputStream);
 			
+			findAndFeedReferanceLocation();
 			updateMap();
+			
+			for (int i = 0;i < path.length;i++) {
+				gyroSensor.reset();
+				Direction direction = path[i];
+				if (direction == Direction.LEFT) {
+					currentState = State.TURNING;
+					robotDirection = robotDirection == 3 ?
+							0 : robotDirection + 1;
+					pilot.rotate(90, false);
+					
+					float diff = 90 - GyroSensor.readGyro();
+					while (Math.abs(diff) > 3) {
+						pilot.rotate(diff, false);
+						diff = 90 - GyroSensor.readGyro();
+					}
+				}
+				else if (direction == Direction.RIGHT) {
+					currentState = State.TURNING;
+					robotDirection = robotDirection == 0 ?
+							3 : robotDirection - 1;
+					pilot.rotate(-90, false);
+					
+					float diff = -90 - GyroSensor.readGyro();
+					while (Math.abs(diff) > 3) {
+						pilot.rotate(diff, false);
+						diff = -90 - GyroSensor.readGyro();
+					}
+				}
+				
+				currentState = State.MOVING;
+				pilot.travel(33);
+				Miner.myPosition += movement[robotDirection];
+				Miner.map[Miner.myPosition] = Miner.explored;
+				
+				sendMyLocation();
+				findObstacle();
+				updateMap();
+			}
+			
+			if (robotDirection == 0)
+				Miner.robotDirection = Direction.FORWARD;
+			else if (robotDirection == 1)
+				Miner.robotDirection = Direction.LEFT;
+			else if (robotDirection == 2)
+				Miner.robotDirection = Direction.BACKWARD;
+			else Miner.robotDirection = Direction.RIGHT;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 	
 	private synchronized void updateMap() {
+		System.out.println("updateMap");
 		try {
 			dataOutputStream.writeInt(-1);
 			for(int i = 0;i < 36;i++)
@@ -73,26 +132,68 @@ public class MappingTask implements Task, RadarUpdateListener, GyroUpdateListene
 			
 			dataOutputStream.flush();
 		} catch (IOException e) {
-			
+			System.out.println("updateMap: exception");
 		}
 	}
 	
-	private void findAndFeedReferanceLocation() {
+	private synchronized void findAndFeedReferanceLocation() {
+		System.out.println("findAndFeedReferanceLocation");
 		float[] values = radar.readValues();
-		Direction closer;
 		if(values[0] < values[1]) {
-			closer = radar.getBaseDirection();
+			wallOnSide = radar.getBaseDirection();
 		} else {
-			closer = radar.getBackDirection();
+			wallOnSide = radar.getBackDirection();
 		}
 		
 		try {
 			dataOutputStream.writeInt(-2);
-			dataOutputStream.writeInt(Direction.getCode(closer));
-			Miner.myPosition = closer == Direction.LEFT ? 32 : 33;
+//			dataOutputStream.writeInt(Direction.getCode(closer));
+			if (wallOnSide == Direction.LEFT) {
+				Miner.myPosition = 32;
+				path = new Direction[] {
+						Direction.FORWARD, Direction.LEFT, Direction.RIGHT,
+						Direction.FORWARD, Direction.FORWARD, Direction.RIGHT,
+						Direction.FORWARD, Direction.FORWARD, Direction.RIGHT,
+						Direction.FORWARD, Direction.FORWARD, Direction.RIGHT,
+						Direction.RIGHT, Direction.FORWARD,
+						Direction.LEFT, Direction.LEFT};
+			}
+			else {
+				Miner.myPosition = 33;
+				path = new Direction[] {
+						Direction.FORWARD, Direction.RIGHT, Direction.LEFT,
+						Direction.FORWARD, Direction.FORWARD, Direction.LEFT,
+						Direction.FORWARD, Direction.FORWARD, Direction.LEFT,
+						Direction.FORWARD, Direction.FORWARD, Direction.LEFT,
+						Direction.LEFT, Direction.FORWARD,
+						Direction.RIGHT, Direction.RIGHT};
+			}
+			dataOutputStream.writeInt(Miner.myPosition);
 			dataOutputStream.writeInt(-2);
 			
 			dataOutputStream.flush();
+		} catch (IOException e) {
+			System.out.println("findAndFeedReferanceLocation: exception");
+		}
+	}
+	
+	private void findObstacle() {
+		float[] values = radar.readValues();
+		if (wallOnSide == radar.getBaseDirection()) {
+			if (values[0] < 20)
+				Miner.map[Miner.myPosition + movement[robotDirection]] = Miner.obstacle;
+		}
+		else {
+			if (values[1] < 20)
+				Miner.map[Miner.myPosition + movement[3 - robotDirection]] = Miner.obstacle;
+		}
+	}
+	
+	private synchronized void sendMyLocation() {
+		try {
+			dataOutputStream.writeInt(-2);
+			dataOutputStream.writeInt(Miner.myPosition);
+			dataOutputStream.writeInt(-2);
 		} catch (IOException e) {
 			
 		}
@@ -100,8 +201,9 @@ public class MappingTask implements Task, RadarUpdateListener, GyroUpdateListene
 
 	@Override
 	public void onResetTask() {
-		
 		try {
+			gyroSensor.removeListener();
+			radar.removeUpdateListener();
 			colorSensor.close();
 			colorSensor = null;
 			dataOutputStream.close();
@@ -112,19 +214,15 @@ public class MappingTask implements Task, RadarUpdateListener, GyroUpdateListene
 	}
 
 	@Override
-	public void onRadarUpdate(float baseDist, float backDist) {
-		// TODO Auto-generated method stub
-	}
-
-	@Override
 	public void onGyroUpdate(float value) {
-		System.out.println("moveAlongWallListener");
-		if (value > 1.5) {
-			pilot.setSpeeds(FAST, SLOW);
-		} else if (value < -1.5) {
-			pilot.setSpeeds(SLOW, FAST);
-		} else {
-			pilot.setSpeeds(FAST, FAST);
+		if (currentState == State.MOVING) {
+			
+		}
+		else if (currentState == State.TURNING) {
+			if (value > 90 || value < -90) {
+				pilot.stop();
+				gyroSensor.reset();
+			}
 		}
 	}
 }
