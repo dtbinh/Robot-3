@@ -30,6 +30,7 @@ public class Miner {
 	
 	public static int[] map = new int[36];
 	public static int myPosition;
+	public static Direction robotDirection;
 
 	static Timer buttonTimer = new Timer();
 	static ArrayList<Task> tasks = new ArrayList<>();
@@ -43,9 +44,8 @@ public class Miner {
 		Pilot pilot = new Pilot();
 		TouchSensor touchSensor = new TouchSensor();
 		GyroSensor gyroSensor = new GyroSensor();
+
 		Grabber grabber = new Grabber(30);
-
-
 		tasks.add(new EntranceTask(radar, pilot, touchSensor, gyroSensor));
 		tasks.add(new MappingTask(radar, pilot, gyroSensor));
 		tasks.add(new ExecutionTask(grabber, pilot, gyroSensor));
@@ -116,13 +116,13 @@ public class Miner {
 			switch (direction) {
 			default:
 			case LEFT:
-				return 0;
-			case FORWARD:
 				return 1;
-			case RIGHT:
+			case FORWARD:
 				return 2;
-			case BACKWARD:
+			case RIGHT:
 				return 3;
+			case BACKWARD:
+				return 4;
 			}
 		}
 	}

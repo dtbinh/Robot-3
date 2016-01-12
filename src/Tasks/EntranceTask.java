@@ -48,11 +48,11 @@ public class EntranceTask implements Task, TouchSensor.OnTouchListener, Radar.Ra
 				switch (currentState) {
 				case MOVING_ALONG:
 					if (value > 1.5) {
-						pilot.setSpeeds(FAST, SLOW);
+						pilot.setSpeedsAndMove(FAST, SLOW);
 					} else if (value < -1.5) {
-						pilot.setSpeeds(SLOW, FAST);
+						pilot.setSpeedsAndMove(SLOW, FAST);
 					} else {
-						pilot.setSpeeds(FAST, FAST);
+						pilot.setSpeedsAndMove(FAST, FAST);
 					}
 					break;
 				case TAKING_CORNER:
