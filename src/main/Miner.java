@@ -9,6 +9,7 @@ import Modules.Pilot;
 import Modules.Radar;
 import Modules.TouchSensor;
 import Tasks.EntranceTask;
+import Tasks.MappingTask;
 import Tasks.Task;
 import Utils.Commons;
 import lejos.hardware.Button;
@@ -16,14 +17,10 @@ import lejos.hardware.motor.EV3LargeRegulatedMotor;
 import lejos.hardware.port.MotorPort;
 
 public class Miner {
-
-	// public static EV3LargeRegulatedMotor leftMotor = new
-	// EV3LargeRegulatedMotor(MotorPort.A);
+	
 	public static EV3LargeRegulatedMotor grabberMotor = new EV3LargeRegulatedMotor(MotorPort.B);
-	// public static EV3LargeRegulatedMotor radarMotor = new
-	// EV3LargeRegulatedMotor(MotorPort.C);
-	// public static EV3LargeRegulatedMotor rightMotor = new
-	// EV3LargeRegulatedMotor(MotorPort.D);
+	
+	public static int[] map = new int[36];
 
 	static Timer buttonTimer = new Timer();
 	static ArrayList<Task> tasks = new ArrayList<>();
@@ -39,6 +36,7 @@ public class Miner {
 		GyroSensor gyroSensor = new GyroSensor();
 
 		tasks.add(new EntranceTask(radar, pilot, touchSensor, gyroSensor));
+		tasks.add(new MappingTask(radar, pilot, gyroSensor));
 
 		Commons.writeWithTitle("IDLE", "Select task...");
 		

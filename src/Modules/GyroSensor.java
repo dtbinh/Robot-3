@@ -14,6 +14,8 @@ public class GyroSensor {
 	
 	GyroUpdateListener gyroUpdateListener;
 	
+	boolean hasReadingOpened = false;
+	
 	Timer timer = new Timer();
 	TimerTask timerTask = new TimerTask() {
 
@@ -38,16 +40,21 @@ public class GyroSensor {
 
 	public void setListener(GyroUpdateListener listener) {
 		System.out.println("\tsetGyroListener");
-		gyroSensor.reset();
 		gyroUpdateListener = listener;
 	}
 
 	public void startReading() {
+		if (hasReadingOpened) return;
 		if (Miner.isReset())
 			return;
 
 		gyroSensor.reset();
 		timer.schedule(timerTask, 0, 300);
+		hasReadingOpened = true;
+	}
+	
+	public void reset() {
+		gyroSensor.reset();
 	}
 
 	public void removeListener() {
