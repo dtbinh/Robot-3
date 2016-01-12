@@ -7,7 +7,7 @@ import lejos.robotics.navigation.DifferentialPilot;
 public class Pilot {
 	private DifferentialPilot dPilot;
 	private static final double WHEEL_DIAMETER = 5.6;
-	private static final double TRACK_WIDTH = 12.08;
+	private static final double TRACK_WIDTH = 11.5;
 
 	private EV3LargeRegulatedMotor leftMotor = new EV3LargeRegulatedMotor(MotorPort.D);
 	private EV3LargeRegulatedMotor rightMotor = new EV3LargeRegulatedMotor(MotorPort.A);

@@ -3,6 +3,7 @@ package Tasks;
 import Modules.Grabber;
 import Modules.GyroSensor;
 import Modules.Pilot;
+import Modules.Grabber.State;
 import lejos.hardware.Button;
 import lejos.hardware.Sound;
 import main.Miner;
@@ -23,6 +24,7 @@ public class ExecutionTask implements Task, GyroSensor.GyroUpdateListener {
 	GyroSensor gyroSensor;
 
 	float limitAngle;
+	double heading;
 
 	ActionFinishListener rotationFinishListener = null;
 
@@ -34,23 +36,41 @@ public class ExecutionTask implements Task, GyroSensor.GyroUpdateListener {
 
 	@Override
 	public void onStartTask() {
+	
+		pilot.setRotationSpeed(60);
 
 		gyroSensor.setListener(this);
 		gyroSensor.startReading();
 
-		double heading = ((double) Direction.RIGHT.getAngle() - 180) % 360;
+		heading = ((double) Direction.RIGHT.getAngle() - 180) % 360;
 
-		heading = goTo(heading, 33, 14);
+		heading = goTo(heading, 33, Miner.station, new ActionFinishListener() {
+			
+			@Override
+			public void onActionFinished() {
+				while (Button.getButtons() != Button.ID_ENTER) {
+					try {
+						Thread.sleep(100);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
 
-		while (Button.getButtons() != Button.ID_ENTER) {
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+				grabber.setState(State.PICK);
+				heading = goTo(heading, Miner.station, Miner.target, new ActionFinishListener() {
+					
+					@Override
+					public void onActionFinished() {
+						grabber.setState(State.DROP);
+						
+					}
+				});
+				
+				
 			}
-		}
+		});
 
-		grabber.setState(1);
+
 
 		// heading = goTo(heading, Miner.station, Miner.target); //Go to target
 
@@ -72,7 +92,7 @@ public class ExecutionTask implements Task, GyroSensor.GyroUpdateListener {
 	 * @param to
 	 * @return new heading.
 	 */
-	public double goTo(double heading, int from, int to) {
+	public double goTo(double heading, int from, int to, final ActionFinishListener finishListener) {
 		int fromX = from % 6;
 		int fromY = -from / 6;
 		int toX = to % 6;
@@ -100,7 +120,7 @@ public class ExecutionTask implements Task, GyroSensor.GyroUpdateListener {
 
 					@Override
 					public void onActionFinished() {
-						Sound.beep();
+						finishListener.onActionFinished();
 
 					}
 				});

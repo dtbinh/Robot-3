@@ -25,8 +25,8 @@ public class Miner {
 	public static final int unknown = 0;
 	public static final int explored = 1;
 	public static final int obstacle = 2;
-	public static final int station = 3;
-	public static final int target = 4;
+	public static final int station = 27;
+	public static final int target = 14;
 	
 	public static int[] map = new int[36];
 	public static int myPosition;
@@ -44,8 +44,9 @@ public class Miner {
 		Pilot pilot = new Pilot();
 		TouchSensor touchSensor = new TouchSensor();
 		GyroSensor gyroSensor = new GyroSensor();
-
-		Grabber grabber = new Grabber(30);
+		Grabber grabber = new Grabber();
+		grabberMotor.setSpeed(60);
+		
 		tasks.add(new EntranceTask(radar, pilot, touchSensor, gyroSensor));
 		tasks.add(new MappingTask(radar, pilot, gyroSensor));
 		tasks.add(new ExecutionTask(grabber, pilot, gyroSensor));
@@ -67,6 +68,7 @@ public class Miner {
 				case Button.ID_UP:
 					taskCounter = 0;
 					Commons.writeWithTitle("RUNNING", "EntranceTask");
+					break;
 				case Button.ID_DOWN:
 					 taskCounter = 1;
 					break;

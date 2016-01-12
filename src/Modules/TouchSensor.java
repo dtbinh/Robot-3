@@ -15,6 +15,8 @@ public class TouchSensor {
 		if (Miner.isReset())
 			return;
 
+		motor.rotate(60);
+
 		reset();
 
 		timer = new Timer();
@@ -31,6 +33,7 @@ public class TouchSensor {
 	public void stopListening() {
 		timer.cancel();
 		timer.purge();
+		motor.rotate(-60);
 	}
 
 	private void reset() {

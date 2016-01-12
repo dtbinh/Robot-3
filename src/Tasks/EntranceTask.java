@@ -20,7 +20,7 @@ public class EntranceTask implements Task, TouchSensor.OnTouchListener, Radar.Ra
 	GyroSensor gyroSensor;
 
 	Direction lastWallDirection;
-	static final int SLOW = 450;
+	static final int SLOW = 430;
 	static final int FAST = 500;
 
 	private static final float DIST_THRESHOLD = 40;
@@ -34,10 +34,14 @@ public class EntranceTask implements Task, TouchSensor.OnTouchListener, Radar.Ra
 		this.pilot = pilot;
 		this.touchSensor = touchSensor;
 		this.gyroSensor = gyroSensor;
+
 	}
 
 	@Override
 	public void onStartTask() {
+
+		pilot.setRotationSpeed(50);
+
 		gyroSensor.startReading();
 		touchSensor.startListening(this);
 		radar.setUpdateListener(this);
@@ -56,25 +60,50 @@ public class EntranceTask implements Task, TouchSensor.OnTouchListener, Radar.Ra
 					}
 					break;
 				case TAKING_CORNER:
+					System.out.println("Taking corner: " + value);
+
 					boolean isLeft = lastWallDirection == Direction.LEFT;
 
 					if (isLeft && value >= 90) {
+						System.out.println("Corner complete: " + value);
 						currentState = State.WAITING;
 						pilot.stop();
+						try {
+							Thread.sleep(100);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						gyroSensor.reset();
 						pilot.travel(40);
+						pilot.rotate(-gyroSensor.readGyro(), false);
+
+
 						currentState = State.CHECKING_WALL;
 						gyroSensor.reset();
 					}
 
 					if (!isLeft && value <= -90) {
+						System.out.println("Corner complete: " + value);
 						currentState = State.WAITING;
 						pilot.stop();
+						try {
+							Thread.sleep(100);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+
+						gyroSensor.reset();
 						pilot.travel(40);
+						pilot.rotate(-gyroSensor.readGyro(), false);
+
 						currentState = State.CHECKING_WALL;
 						gyroSensor.reset();
 					}
 					break;
 				case TURNING_AROUND:
+					System.out.println("TurnAround: " + value);
 					if (value >= 180) {
 						pilot.stop();
 						currentState = State.MOVING_ALONG;
@@ -107,7 +136,7 @@ public class EntranceTask implements Task, TouchSensor.OnTouchListener, Radar.Ra
 	public void onRadarUpdate(float baseDist, float backDist) {
 		if (!isRadarActive)
 			return;
-		
+
 		Direction wallDirection;
 
 		if (baseDist < DIST_THRESHOLD) {
@@ -141,7 +170,7 @@ public class EntranceTask implements Task, TouchSensor.OnTouchListener, Radar.Ra
 		gyroSensor.reset();
 		pilot.rotate(2000, true);
 		currentState = State.TURNING_AROUND;
-		
+
 	}
 
 	@Override
@@ -150,6 +179,7 @@ public class EntranceTask implements Task, TouchSensor.OnTouchListener, Radar.Ra
 		Sound.beep();
 		gyroSensor.removeListener();
 		touchSensor.stopListening();
+		radar.removeUpdateListener();
 		pilot.stop();
 	}
 
