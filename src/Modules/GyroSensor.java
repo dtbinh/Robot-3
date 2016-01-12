@@ -64,6 +64,7 @@ public class GyroSensor {
 
 	public void reset() {
 		gyroSensor.reset();
+		readGyro();
 	}
 
 	public interface GyroUpdateListener {

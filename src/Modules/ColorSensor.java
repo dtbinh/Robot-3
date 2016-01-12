@@ -12,8 +12,8 @@ public class ColorSensor {
 	
 	public int readColor() {
 		Color color = colorAdapter.getColor();
-		int res = color.getGreen() > 7 ? 1 :
-			color.getRed() > 7 ? 7 : -1;
+		int res = color.getGreen() > 5 ? 1 :
+			color.getRed() > 5 ? 7 : -1;
 		return res;
 	}
 	
