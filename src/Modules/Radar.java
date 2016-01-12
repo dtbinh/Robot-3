@@ -41,7 +41,7 @@ public class Radar {
 					listener.onRadarUpdate(values[0], values[1]);
 				}
 			}
-		}, 0, 300);
+		}, 0, 100);
 	}
 
 	public void setUpdateListener(RadarUpdateListener listener) {
