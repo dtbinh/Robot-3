@@ -8,7 +8,6 @@ import Modules.GyroSensor;
 import Modules.Pilot;
 import Modules.Radar;
 import Modules.TouchSensor;
-import Tasks.EntranceTask2;
 import Tasks.EntranceTask;
 import Tasks.MappingTask;
 import Tasks.Task;

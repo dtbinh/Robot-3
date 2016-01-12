@@ -5,14 +5,13 @@ import Modules.GyroSensor.GyroUpdateListener;
 import Modules.Pilot;
 import Modules.Radar;
 import Modules.TouchSensor;
-import Utils.Commons;
 import lejos.hardware.Sound;
 import main.Miner.Direction;
 
 public class EntranceTask implements Task, TouchSensor.OnTouchListener, Radar.RadarUpdateListener {
 
 	public enum State {
-		MOVE_ALONG, TURN_AROUND, TAKE_CORNER, FIND_WALL, UNKNOWN;
+		MOVING_ALONG, TAKING_CORNER, WAITING, CHECKING_WALL, FINISHED;
 	}
 
 	Radar radar;
@@ -26,7 +25,7 @@ public class EntranceTask implements Task, TouchSensor.OnTouchListener, Radar.Ra
 
 	private static final float DIST_THRESHOLD = 40;
 	private State currentState;
-	
+
 	boolean isRadarActive = true;
 	boolean isGyroActive = true;
 
@@ -46,63 +45,37 @@ public class EntranceTask implements Task, TouchSensor.OnTouchListener, Radar.Ra
 
 			@Override
 			public void onGyroUpdate(float value) {
-				if (!isGyroActive) return;
-				synchronized (currentState) {
-					switch (currentState) {
-					case MOVE_ALONG:
-						System.out.println("moveAlongWallListener");
-						if (value > 1.5) {
-							pilot.setSpeeds(FAST, SLOW);
-						} else if (value < -1.5) {
-							pilot.setSpeeds(SLOW, FAST);
-						} else {
-							pilot.setSpeeds(FAST, FAST);
-						}
-						Commons.writeWithTitle("Moving along the wall", "Gyro: " + value);
-						break;
-					case TAKE_CORNER:
-						System.out.println("takeCornerListener");
-						Commons.writeWithTitle("onGyroUpdate", "Gyro: " + value);
-						boolean isLeft = lastWallDirection == Direction.LEFT;
-
-						if (isLeft && value >= 90) {
-							isGyroActive = false;
-							isRadarActive = false;
-							currentState = State.FIND_WALL;
-							pilot.stop();
-							pilot.travel(20);
-							isGyroActive = true;
-							isRadarActive = true;
-
-							System.out.println("Turned LEFT");
-							Commons.writeWithTitle("Turning LEFT", "Gyro: " + value);
-						}
-
-						if (!isLeft && value <= -90) {
-							isGyroActive = false;
-							isRadarActive = false;
-							currentState = State.FIND_WALL;
-							pilot.stop();
-							pilot.travel(20);
-							isGyroActive = true;
-							isRadarActive = true;
-
-							System.out.println("Turned RIGHT");
-							Commons.writeWithTitle("Turning RIGHT ", "Gyro: " + value);
-						}
-						break;
-					case TURN_AROUND:
-						System.out.println("turnRobotAroundListener");
-						Commons.writeWithTitle("Gyro:", value + "");
-
-						if (value >= 180) {
-							pilot.stop();
-							moveAlongWall();
-						}
-						break;
-					default:
-						break;
+				switch (currentState) {
+				case MOVING_ALONG:
+					if (value > 1.5) {
+						pilot.setSpeeds(FAST, SLOW);
+					} else if (value < -1.5) {
+						pilot.setSpeeds(SLOW, FAST);
+					} else {
+						pilot.setSpeeds(FAST, FAST);
 					}
+					break;
+				case TAKING_CORNER:
+					boolean isLeft = lastWallDirection == Direction.LEFT;
+
+					if (isLeft && value >= 90) {
+						currentState = State.WAITING;
+						pilot.stop();
+						pilot.travel(40);
+						currentState = State.CHECKING_WALL;
+						gyroSensor.reset();
+					}
+
+					if (!isLeft && value <= -90) {
+						currentState = State.WAITING;
+						pilot.stop();
+						pilot.travel(40);
+						currentState = State.CHECKING_WALL;
+						gyroSensor.reset();
+					}
+					break;
+				default:
+					break;
 				}
 			}
 		});
@@ -110,61 +83,55 @@ public class EntranceTask implements Task, TouchSensor.OnTouchListener, Radar.Ra
 	}
 
 	private void moveAlongWall() {
-		currentState = State.MOVE_ALONG;
-	}
-
-	private void turnRobotAround() {
-		currentState = State.TURN_AROUND;
-		pilot.travel(-20);
-		pilot.rotate(1000, true);
+		currentState = State.MOVING_ALONG;
 	}
 
 	private void takeCorner() {
-		currentState = State.TAKE_CORNER;
 		if (lastWallDirection == Direction.LEFT) {
 			pilot.rotate(1000, true);
 		} else {
 			pilot.rotate(-1000, true);
 		}
-		System.out.println("takeCorner: takeCornerListener");
+		currentState = State.TAKING_CORNER;
 	}
 
 	@Override
 	public void onRadarUpdate(float baseDist, float backDist) {
-		if (!isRadarActive) return;
-		// TODO wait for go a little bit until find wall again.. direct execution thinks it found another corner...
-		if (currentState != State.FIND_WALL) {
-			if(baseDist < DIST_THRESHOLD) {
-				lastWallDirection = radar.getBaseDirection();
-			} else if(backDist < DIST_THRESHOLD) {
-				lastWallDirection = radar.getBackDirection();
+		if (!isRadarActive)
+			return;
+
+		if (baseDist < DIST_THRESHOLD) {
+			lastWallDirection = radar.getBaseDirection();
+		} else if (backDist < DIST_THRESHOLD) {
+			lastWallDirection = radar.getBackDirection();
+		} else {
+			lastWallDirection = null;
+		}
+
+		if (currentState == State.MOVING_ALONG && lastWallDirection == null) {
+			currentState = State.WAITING;
+			pilot.stop();
+			takeCorner();
+		}
+
+		if (currentState == State.CHECKING_WALL) {
+			if (lastWallDirection == null) {
+				onResetTask();
 			} else {
-				System.out.println("onRadarUpdate: Corner Found!");
-				//TODO takeCorner if not entered
-				pilot.stop();
-				takeCorner();
-				
-				return;
+				currentState = State.MOVING_ALONG;
 			}
 		}
-		else {
-			if (backDist < DIST_THRESHOLD || baseDist < DIST_THRESHOLD)
-				currentState = State.MOVE_ALONG;
-			else
-				onResetTask();
-		}
+
 	}
 
 	@Override
 	public void onTouched() {
-		pilot.stop();
-		touchSensor.stopListening();
-		turnRobotAround();
+
 	}
 
 	@Override
 	public void onResetTask() {
-		currentState = State.UNKNOWN;
+		currentState = State.FINISHED;
 		Sound.beep();
 		gyroSensor.removeListener();
 		touchSensor.stopListening();
