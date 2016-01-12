@@ -35,6 +35,7 @@ public class Miner {
 		TouchSensor touchSensor = new TouchSensor();
 		GyroSensor gyroSensor = new GyroSensor();
 
+
 		tasks.add(new EntranceTask(radar, pilot, touchSensor, gyroSensor));
 		tasks.add(new MappingTask(radar, pilot, gyroSensor));
 

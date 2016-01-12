@@ -49,17 +49,19 @@ public class GyroSensor {
 			return;
 
 		gyroSensor.reset();
-		timer.schedule(timerTask, 0, 300);
+
+		timer.schedule(timerTask, 0, 50);
 		hasReadingOpened = true;
 	}
-	
-	public void reset() {
-		gyroSensor.reset();
-	}
+
 
 	public void removeListener() {
 		System.out.println("\tremoveGyroListener");
 		gyroUpdateListener = null;
+	}
+	
+	public void reset() {
+		gyroSensor.reset();
 	}
 
 	public interface GyroUpdateListener {
