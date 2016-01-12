@@ -20,7 +20,14 @@ public class Miner {
 	
 	public static EV3LargeRegulatedMotor grabberMotor = new EV3LargeRegulatedMotor(MotorPort.B);
 	
+	public static final int unknown = 0;
+	public static final int explored = 1;
+	public static final int obstacle = 2;
+	public static final int station = 3;
+	public static final int target = 4;
+	
 	public static int[] map = new int[36];
+	public static int myPosition;
 
 	static Timer buttonTimer = new Timer();
 	static ArrayList<Task> tasks = new ArrayList<>();

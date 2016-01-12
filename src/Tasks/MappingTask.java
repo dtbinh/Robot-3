@@ -20,12 +20,6 @@ public class MappingTask implements Task, RadarUpdateListener, GyroUpdateListene
 	static final int SLOW = 450;
 	static final int FAST = 500;
 	
-	private final int unknown = 0;
-	private final int explored = 1;
-	private final int obstacle = 2;
-	private final int station = 3;
-	private final int target = 4;
-	
 	Radar radar;
 	Pilot pilot;
 	GyroSensor gyroSensor;
@@ -34,6 +28,8 @@ public class MappingTask implements Task, RadarUpdateListener, GyroUpdateListene
 	
 	ServerSocket serverSocket;
 	DataOutputStream dataOutputStream;
+	
+	Direction[] path = new Direction[16];
 
 	public MappingTask(Radar radar, Pilot pilot, GyroSensor gyroSensor) {
 		this.radar = radar;
@@ -50,7 +46,7 @@ public class MappingTask implements Task, RadarUpdateListener, GyroUpdateListene
 			colorSensor = new ColorSensor();
 			for (int r = 0;r < 6;r++)
 				for (int c = 0;c < 6;c++) {
-					int grid = r == 5 ? explored : unknown;
+					int grid = r == 5 ? Miner.explored : Miner.unknown;
 					Miner.map[r * 6 + c] = grid;
 				}
 			
@@ -93,6 +89,7 @@ public class MappingTask implements Task, RadarUpdateListener, GyroUpdateListene
 		try {
 			dataOutputStream.writeInt(-2);
 			dataOutputStream.writeInt(Direction.getCode(closer));
+			Miner.myPosition = closer == Direction.LEFT ? 32 : 33;
 			dataOutputStream.writeInt(-2);
 			
 			dataOutputStream.flush();
