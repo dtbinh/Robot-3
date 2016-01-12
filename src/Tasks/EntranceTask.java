@@ -11,7 +11,7 @@ import main.Miner.Direction;
 public class EntranceTask implements Task, TouchSensor.OnTouchListener, Radar.RadarUpdateListener {
 
 	public enum State {
-		MOVING_ALONG, TAKING_CORNER, WAITING, CHECKING_WALL, FINISHED;
+		MOVING_ALONG, TAKING_CORNER, WAITING, CHECKING_WALL, FINISHED, TURNING_AROUND;
 	}
 
 	Radar radar;
@@ -24,7 +24,7 @@ public class EntranceTask implements Task, TouchSensor.OnTouchListener, Radar.Ra
 	static final int FAST = 500;
 
 	private static final float DIST_THRESHOLD = 40;
-	private State currentState;
+	private State currentState = State.WAITING;
 
 	boolean isRadarActive = true;
 	boolean isGyroActive = true;
@@ -74,6 +74,13 @@ public class EntranceTask implements Task, TouchSensor.OnTouchListener, Radar.Ra
 						gyroSensor.reset();
 					}
 					break;
+				case TURNING_AROUND:
+					if (value >= 180) {
+						pilot.stop();
+						currentState = State.MOVING_ALONG;
+						gyroSensor.reset();
+					}
+					break;
 				default:
 					break;
 				}
@@ -87,10 +94,11 @@ public class EntranceTask implements Task, TouchSensor.OnTouchListener, Radar.Ra
 	}
 
 	private void takeCorner() {
+		gyroSensor.reset();
 		if (lastWallDirection == Direction.LEFT) {
-			pilot.rotate(1000, true);
+			pilot.rotate(2000, true);
 		} else {
-			pilot.rotate(-1000, true);
+			pilot.rotate(-2000, true);
 		}
 		currentState = State.TAKING_CORNER;
 	}
@@ -99,23 +107,25 @@ public class EntranceTask implements Task, TouchSensor.OnTouchListener, Radar.Ra
 	public void onRadarUpdate(float baseDist, float backDist) {
 		if (!isRadarActive)
 			return;
+		
+		Direction wallDirection;
 
 		if (baseDist < DIST_THRESHOLD) {
-			lastWallDirection = radar.getBaseDirection();
+			lastWallDirection = wallDirection = radar.getBaseDirection();
 		} else if (backDist < DIST_THRESHOLD) {
-			lastWallDirection = radar.getBackDirection();
+			lastWallDirection = wallDirection = radar.getBackDirection();
 		} else {
-			lastWallDirection = null;
+			wallDirection = null;
 		}
 
-		if (currentState == State.MOVING_ALONG && lastWallDirection == null) {
+		if (currentState == State.MOVING_ALONG && wallDirection == null) {
 			currentState = State.WAITING;
 			pilot.stop();
 			takeCorner();
 		}
 
 		if (currentState == State.CHECKING_WALL) {
-			if (lastWallDirection == null) {
+			if (wallDirection == null) {
 				onResetTask();
 			} else {
 				currentState = State.MOVING_ALONG;
@@ -126,7 +136,12 @@ public class EntranceTask implements Task, TouchSensor.OnTouchListener, Radar.Ra
 
 	@Override
 	public void onTouched() {
-
+		currentState = State.WAITING;
+		pilot.travel(-10);
+		gyroSensor.reset();
+		pilot.rotate(2000, true);
+		currentState = State.TURNING_AROUND;
+		
 	}
 
 	@Override
