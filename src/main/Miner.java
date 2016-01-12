@@ -56,7 +56,7 @@ public class Miner {
 					taskCounter = 0;
 					Commons.writeWithTitle("RUNNING", "EntranceTask");
 				case Button.ID_DOWN:
-					// taskCounter = 1;
+					 taskCounter = 1;
 					break;
 				case Button.ID_LEFT:
 					// taskCounter = 2;
@@ -70,7 +70,6 @@ public class Miner {
 	}
 
 	public enum Direction {
-
 		LEFT, FORWARD, RIGHT, BACKWARD;
 
 		public int getAngle() {
@@ -98,6 +97,20 @@ public class Miner {
 				return RIGHT;
 			case 270:
 				return BACKWARD;
+			}
+		}
+		
+		public static int getCode(Direction direction) {
+			switch (direction) {
+			default:
+			case LEFT:
+				return 0;
+			case FORWARD:
+				return 1;
+			case RIGHT:
+				return 2;
+			case BACKWARD:
+				return 3;
 			}
 		}
 	}

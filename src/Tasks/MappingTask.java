@@ -13,8 +13,12 @@ import Modules.Pilot;
 import Modules.Radar;
 import Modules.Radar.RadarUpdateListener;
 import main.Miner;
+import main.Miner.Direction;
 
 public class MappingTask implements Task, RadarUpdateListener, GyroUpdateListener {
+	
+	static final int SLOW = 450;
+	static final int FAST = 500;
 	
 	private final int unknown = 0;
 	private final int explored = 1;
@@ -50,7 +54,7 @@ public class MappingTask implements Task, RadarUpdateListener, GyroUpdateListene
 					Miner.map[r * 6 + c] = grid;
 				}
 			
-			// TODO where am i within area
+			findAndFeedReferanceLocation();
 			
 			serverSocket = new ServerSocket(1234);
 			Socket client = serverSocket.accept();
@@ -70,6 +74,26 @@ public class MappingTask implements Task, RadarUpdateListener, GyroUpdateListene
 			for(int i = 0;i < 36;i++)
 				dataOutputStream.writeInt(Miner.map[i]);
 			dataOutputStream.writeInt(-1);
+			
+			dataOutputStream.flush();
+		} catch (IOException e) {
+			
+		}
+	}
+	
+	private void findAndFeedReferanceLocation() {
+		float[] values = radar.readValues();
+		Direction closer;
+		if(values[0] < values[1]) {
+			closer = radar.getBaseDirection();
+		} else {
+			closer = radar.getBackDirection();
+		}
+		
+		try {
+			dataOutputStream.writeInt(-2);
+			dataOutputStream.writeInt(Direction.getCode(closer));
+			dataOutputStream.writeInt(-2);
 			
 			dataOutputStream.flush();
 		} catch (IOException e) {
@@ -97,6 +121,13 @@ public class MappingTask implements Task, RadarUpdateListener, GyroUpdateListene
 
 	@Override
 	public void onGyroUpdate(float value) {
-		// TODO Auto-generated method stub
+		System.out.println("moveAlongWallListener");
+		if (value > 1.5) {
+			pilot.setSpeeds(FAST, SLOW);
+		} else if (value < -1.5) {
+			pilot.setSpeeds(SLOW, FAST);
+		} else {
+			pilot.setSpeeds(FAST, FAST);
+		}
 	}
 }
