@@ -22,7 +22,7 @@ public class MappingTask implements Task, GyroUpdateListener {
 		TURNING, MOVING;
 	}
 	
-	static final int SLOW = 450;
+	static final int SLOW = 480;
 	static final int FAST = 500;
 
 	Radar radar;
@@ -34,7 +34,7 @@ public class MappingTask implements Task, GyroUpdateListener {
 	ServerSocket serverSocket;
 	DataOutputStream dataOutputStream;
 
-	Direction[] path = new Direction[16];
+	Direction[] path;
 	
 	boolean activateCorrection = false;
 	State currentState;
@@ -90,7 +90,7 @@ public class MappingTask implements Task, GyroUpdateListener {
 					pilot.rotate(turnAmount, false);
 					
 					float diff = turnAmount - gyroSensor.readGyro();
-					while (Math.abs(diff) > 2) {
+					while (Math.abs(diff) > 3) {
 						pilot.rotate(diff, false);
 						diff = turnAmount - gyroSensor.readGyro();
 					}
@@ -104,7 +104,7 @@ public class MappingTask implements Task, GyroUpdateListener {
 					pilot.rotate(turnAmount, false);
 					
 					float diff = turnAmount - gyroSensor.readGyro();
-					while (Math.abs(diff) > 2) {
+					while (Math.abs(diff) > 3) {
 						pilot.rotate(diff, false);
 						diff = turnAmount - gyroSensor.readGyro();
 					}

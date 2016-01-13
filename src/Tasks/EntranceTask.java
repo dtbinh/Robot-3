@@ -20,10 +20,10 @@ public class EntranceTask implements Task, TouchSensor.OnTouchListener, Radar.Ra
 	GyroSensor gyroSensor;
 
 	Direction lastWallDirection;
-	static final int SLOW = 430;
+	static final int SLOW = 480;
 	static final int FAST = 500;
 
-	private static final float DIST_THRESHOLD = 40;
+	private static final float DIST_THRESHOLD = 45;
 	private State currentState = State.WAITING;
 
 	boolean isRadarActive = true;
@@ -40,7 +40,7 @@ public class EntranceTask implements Task, TouchSensor.OnTouchListener, Radar.Ra
 	@Override
 	public void onStartTask() {
 
-		pilot.setRotationSpeed(50);
+		pilot.setRotationSpeed(40);
 
 		gyroSensor.startReading();
 		touchSensor.startListening(this);
@@ -74,9 +74,9 @@ public class EntranceTask implements Task, TouchSensor.OnTouchListener, Radar.Ra
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
-						gyroSensor.reset();
+						
+						pilot.rotate(10, false);
 						pilot.travel(40);
-						pilot.rotate(-gyroSensor.readGyro(), false);
 
 
 						currentState = State.CHECKING_WALL;
@@ -94,9 +94,9 @@ public class EntranceTask implements Task, TouchSensor.OnTouchListener, Radar.Ra
 							e.printStackTrace();
 						}
 
-						gyroSensor.reset();
+
+						pilot.rotate(10, false);
 						pilot.travel(40);
-						pilot.rotate(-gyroSensor.readGyro(), false);
 
 						currentState = State.CHECKING_WALL;
 						gyroSensor.reset();

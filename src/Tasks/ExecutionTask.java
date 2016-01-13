@@ -11,10 +11,10 @@ import main.Miner.Direction;
 
 public class ExecutionTask implements Task, GyroSensor.GyroUpdateListener {
 
-	private static final float GRID_LENGTH = 33f;
+	private static final float GRID_LENGTH = 34f;
 
 	private enum GyroState {
-		MOVE, ROTATE, WAIT
+		ROTATE, WAIT
 	}
 
 	GyroState currentState = GyroState.WAIT;
@@ -34,20 +34,31 @@ public class ExecutionTask implements Task, GyroSensor.GyroUpdateListener {
 		this.pilot = pilot;
 	}
 
+
+	int station = 0, target = 0, myPosition = 0;
+	
 	@Override
 	public void onStartTask() {
 	
-		pilot.setRotationSpeed(60);
+		pilot.setRotationSpeed(40);
 
 		gyroSensor.setListener(this);
 		gyroSensor.startReading();
+		
+		
+		/*for(int i=0; i< 36; i++) {
+			if(Miner.map[i] == Miner.station) station = i;
+			if(Miner.map[i] == Miner.target) target = i;
+			if(Miner.map[i] == Miner.myPosition) myPosition = i;
+		}*/
 
 		heading = ((double) Direction.RIGHT.getAngle() - 180) % 360;
 
-		heading = goTo(heading, 33, Miner.station, new ActionFinishListener() {
+		heading = goTo(heading, 33, 10, new ActionFinishListener() {
 			
 			@Override
 			public void onActionFinished() {
+				Sound.twoBeeps();
 				while (Button.getButtons() != Button.ID_ENTER) {
 					try {
 						Thread.sleep(100);
@@ -55,13 +66,13 @@ public class ExecutionTask implements Task, GyroSensor.GyroUpdateListener {
 						e.printStackTrace();
 					}
 				}
-
 				grabber.setState(State.PICK);
-				heading = goTo(heading, Miner.station, Miner.target, new ActionFinishListener() {
+				heading = goTo(heading, 10, 25, new ActionFinishListener() {
 					
 					@Override
 					public void onActionFinished() {
 						grabber.setState(State.DROP);
+						onResetTask();
 						
 					}
 				});
