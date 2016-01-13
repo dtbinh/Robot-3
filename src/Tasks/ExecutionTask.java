@@ -46,11 +46,12 @@ public class ExecutionTask implements Task, GyroSensor.GyroUpdateListener {
 		gyroSensor.startReading();
 		
 		
-		/*for(int i=0; i< 36; i++) {
+		for(int i=0; i< 36; i++) {
 			if(Miner.map[i] == Miner.station) station = i;
 			if(Miner.map[i] == Miner.target) target = i;
 			if(Miner.map[i] == Miner.myPosition) myPosition = i;
-		}*/
+		}
+
 
 		heading = ((double) Direction.RIGHT.getAngle() - 180) % 360;
 
